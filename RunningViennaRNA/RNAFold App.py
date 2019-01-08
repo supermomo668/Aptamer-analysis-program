@@ -1,16 +1,14 @@
-import os, subprocess, datetime
+import os, subprocess, datetime, csv
 from tkinter import *
 from tkinter.messagebox import showinfo
 from tkinter.filedialog import askopenfilename
 ##check directory
-dir = r"C:\Users\Mo\Documents\Aptagen\Aptani\aptani\Vienna_RNA"; os.chdir(dir)
+#os.chdir(dir)
 ## Run command: os.system(r"C:\Users\Mo\Documents\Aptagen\Aptani\aptani\Vienna_RNA\RNAfold.exe")
 
 #FNULL = open(os.devnull, 'w');    #use this if you want to suppress output to stdout from the subprocess
 
-
 rootwindow = Tk()
-
 class App:
     def __init__(self, master):
 
@@ -27,7 +25,7 @@ class App:
         GUI_RNAfold()
         self.readylabel.config(text = "Launching... to Aptamer wonderland")
     def RNAinteract_window(self):
-        self.readylabel.config(text = self.not_ready)
+        self.readylabel.config(text = self.not_ready, f=15)
 
 class GUI_RNAfold:
     def __init__(self):
@@ -37,8 +35,8 @@ class GUI_RNAfold:
                       width = 550, height = 640).grid(rowspan = 15, columnspan = 8, sticky = N,pady = 10, padx = 10)
         Label(master_rnafold, text = 'Your input file: \nRequirement: Line-delimited sequences').grid(row = 1, column = 3);
         button1 = Button(master_rnafold, text = 'Upload file here (.txt/.csv)',command = self.file_upload); button1.grid(row=1, column =4);
-        Label(master_rnafold, text = 'Desired output file name:  \nRequirement: Please enter filename'
-                                     '(without extension)').grid(row = 2, column = 3);
+        Label(master_rnafold, text = 'Desired output file name:  \nRequirement: Filename without extension'
+                                     '\n (Optional)').grid(row = 2, column = 3);
 
         self.entry_fileout = Entry(master_rnafold, width = 30); self.entry_fileout.bind("<Return>");
         self.entry_fileout.grid(row = 2, column = 4);
@@ -56,17 +54,23 @@ class GUI_RNAfold:
         if self.type == '.csv':
             self.textbox1.insert(END, 'Not ready for this yet')
         elif self.type == '.txt':
-            executable = r"C:\Users\Mo\Documents\Aptagen\Aptani\aptani\Vienna_RNA\RNAfold.exe"
+            ## IMPORTANT: File Path of RNAFold
+            executable = r"C:\Users\mailb\PycharmProjects\Aptagen-master\RunningViennaRNA\ViennaRNA\RNAfold.exe"
             name_fileout = self.entry_fileout.get();
             if name_fileout == '':
                 name_fileout = 'MyResults_'+str(datetime.date.today())
-            output_directory = os.path.dirname(self.filedir)+ '/'+name_fileout+'.txt';
 
+            output_directory = os.path.dirname(self.filedir)+ '/'+name_fileout+'.txt';
             command_line = executable + ' ' + '-i ' + self.filedir
             file_out = open(output_directory, 'w')
-            subprocess.call(command_line, shell=False,stdout= file_out)
-            self.textbox1.insert(END, '\n.\n.\nHere you go! \n' + 'Your output file directory is: ' + output_directory)
-                                 #+ ' with the length of: ' + len(Tolist(output_directory)))
+            s = subprocess.call(command_line, shell=False,stdout= file_out)
+            if s>=0:
+                process_status = 'Sucess!'
+            else:
+                process_status = 'Failed!'
+            self.textbox1.insert(END, '\n\nThe process is ...' + process_status+ '\n.\n.\nHere you go! \n' +
+                                    'Your output file directory is: '+ output_directory + ' with '
+                                    + str(len(Tolist(output_directory))/2)+ ' sequences.')
 
     def file_upload(self):
         self.filedir = askopenfilename(); self.label_status.config(text = 'Importing...');
@@ -81,8 +85,6 @@ class GUI_RNAfold:
         self.textbox1.insert(END, '\nYour input file is located at:'+self.filedir+'\nNumber of sequences: '+
                              str(len(self.seqs))+ '\nFirst sequence: '+self.seqs[0]+'\nLast Sequence: '+self.seqs[-1])
 
-
-import csv
 def Tolist(filename):
     with open(filename, 'r') as f:
         reader = csv.reader(f); seq_list = list(reader)
